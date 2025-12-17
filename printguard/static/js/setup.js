@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             progressContainer = document.getElementById('setup-progress');
         }
-            
+
         progressContainer.querySelectorAll('.progress-step').forEach(step => {
             step.classList.remove('active');
             const stepId = step.dataset.step;
@@ -61,35 +61,35 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (sectionId === 'finish') {
-            document.getElementById('summary-network-status').textContent = 
+            document.getElementById('summary-network-status').textContent =
                 setupState.networkConfigured ? 'Configured ✓' : 'Not Configured';
-            document.getElementById('summary-network-status').className = 
+            document.getElementById('summary-network-status').className =
                 setupState.networkConfigured ? 'status-configured' : '';
-            
+
             if (selectedNetworkOption === 'external') {
                 document.getElementById('tunnel-summary-item').style.display = 'block';
-                const tunnelStatus = setupState.tunnelInitialized ? 'Initialized ✓' : 
-                                   setupState.tunnelConfigured ? 'Configured (Not Initialized)' : 'Not Configured';
+                const tunnelStatus = setupState.tunnelInitialized ? 'Initialized ✓' :
+                    setupState.tunnelConfigured ? 'Configured (Not Initialized)' : 'Not Configured';
                 document.getElementById('summary-tunnel-status').textContent = tunnelStatus;
-                document.getElementById('summary-tunnel-status').className = 
+                document.getElementById('summary-tunnel-status').className =
                     setupState.tunnelInitialized ? 'status-configured' : '';
                 document.getElementById('vapid-summary-item').style.display = 'block';
-                document.getElementById('summary-vapid-status').textContent = 
+                document.getElementById('summary-vapid-status').textContent =
                     setupState.vapidConfigured ? 'Configured ✓' : 'Not Configured';
-                document.getElementById('summary-vapid-status').className = 
+                document.getElementById('summary-vapid-status').className =
                     setupState.vapidConfigured ? 'status-configured' : '';
                 document.getElementById('ssl-summary-item').style.display = 'none';
             } else {
                 document.getElementById('tunnel-summary-item').style.display = 'none';
                 document.getElementById('vapid-summary-item').style.display = 'block';
                 document.getElementById('ssl-summary-item').style.display = 'block';
-                document.getElementById('summary-vapid-status').textContent = 
+                document.getElementById('summary-vapid-status').textContent =
                     setupState.vapidConfigured ? 'Configured ✓' : 'Not Configured';
-                document.getElementById('summary-vapid-status').className = 
+                document.getElementById('summary-vapid-status').className =
                     setupState.vapidConfigured ? 'status-configured' : '';
-                document.getElementById('summary-ssl-status').textContent = 
+                document.getElementById('summary-ssl-status').textContent =
                     setupState.sslConfigured ? 'Configured ✓' : 'Not Configured';
-                document.getElementById('summary-ssl-status').className = 
+                document.getElementById('summary-ssl-status').className =
                     setupState.sslConfigured ? 'status-configured' : '';
             }
         }
@@ -189,14 +189,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('/setup/save-tunnel-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     provider: selectedTunnelProvider,
                     token: token,
                     domain: domain,
                     email: email
                 })
             });
-            
+
             if (response.ok) {
                 const result = await response.json();
                 setupState.tunnelConfigured = true;
@@ -247,19 +247,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const subject = 'mailto:' + subjectInput;
         const baseUrlInput = document.getElementById('base-url').value.trim();
         const baseUrl = 'https://' + baseUrlInput;
-        
+
         if (!publicKey || !privateKey || !subjectInput || !baseUrlInput) {
             alert('All fields are required');
             return;
         }
-        
+
         try {
             const response = await fetch('/setup/save-vapid-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ public_key: publicKey, private_key: privateKey, subject, base_url: baseUrl })
             });
-            
+
             if (response.ok) {
                 setupState.vapidConfigured = true;
                 setupState.vapidData = { publicKey, privateKey, subject, baseUrl };
@@ -301,8 +301,37 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('ssl-import-form').style.display = 'block';
     });
 
-    document.getElementById('save-ssl-settings').addEventListener('click', () => {
-        showSection('finish');
+    document.getElementById('save-ssl-settings').addEventListener('click', async () => {
+        const certInput = document.getElementById('ssl-cert-file');
+        const keyInput = document.getElementById('ssl-key-file');
+
+        if (!certInput.files.length || !keyInput.files.length) {
+            alert('Please select both a certificate file and a key file');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('cert_file', certInput.files[0]);
+        formData.append('key_file', keyInput.files[0]);
+
+        try {
+            const response = await fetch('/setup/upload-ssl-cert', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                setupState.sslConfigured = true;
+                setupState.sslData = { uploaded: true };
+                showSection('finish');
+            } else {
+                const error = await response.json();
+                alert(`Failed to upload SSL certificate: ${error.detail}`);
+            }
+        } catch (error) {
+            console.error('Error uploading SSL certificate:', error);
+            alert('Error uploading SSL certificate');
+        }
     });
 
     document.getElementById('finish-setup-btn').addEventListener('click', async () => {
@@ -385,11 +414,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('cloudflare-selection-loading').style.display = 'block';
         document.getElementById('cloudflare-selection-content').style.display = 'none';
         document.getElementById('cloudflare-selection-error').style.display = 'none';
-        
+
         try {
             const response = await fetch('/setup/cloudflare/accounts-zones');
             const result = await response.json();
-            
+
             if (response.ok && result.success) {
                 populateAccountsAndZones(result.accounts, result.zones);
                 document.getElementById('cloudflare-selection-loading').style.display = 'none';
@@ -527,13 +556,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ operating_system: selectedOperatingSystem })
             });
-            
+
             if (response.ok) {
                 const result = await response.json();
                 document.getElementById('tunnel-token-section').style.display = 'block';
                 const commandsContainer = document.getElementById('setup-commands-container');
                 commandsContainer.innerHTML = '';
-                
+
                 if (result.setup_commands && result.setup_commands.length > 0) {
                     result.setup_commands.forEach((command, index) => {
                         const commandDiv = document.createElement('div');
@@ -577,7 +606,7 @@ document.addEventListener('DOMContentLoaded', () => {
             textArea.select();
             document.execCommand('copy');
             document.body.removeChild(textArea);
-            
+
             const originalText = button.textContent;
             button.textContent = '✓';
             setTimeout(() => {
