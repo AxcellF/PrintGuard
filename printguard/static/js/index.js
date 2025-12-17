@@ -225,38 +225,38 @@ function removeCamera(cameraUUID) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ camera_uuid: cameraUUID })
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(`Failed to remove camera ${cameraUUID}: ${errData.detail || response.statusText}`);
-            });
-        }
-        return response.json();
-    })
-    .then(() => {
-        const cameraItem = document.querySelector(`.camera-item[data-camera-id="${cameraUUID}"]`);
-        if (cameraItem) {
-            cameraItem.remove();
-        }
-        if (window.cameraUUID === cameraUUID) {
-            const firstCamera = document.querySelector('.camera-item');
-            if (firstCamera) {
-                firstCamera.click();
-            } else {
-                window.location.reload();
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    throw new Error(`Failed to remove camera ${cameraUUID}: ${errData.detail || response.statusText}`);
+                });
             }
-        }
-        const remainingCameras = document.querySelectorAll('.camera-item');
-        if (remainingCameras.length === 0) {
-            if (addCameraModalOverlay) {
-                addCameraModalOverlay.style.display = 'flex';
+            return response.json();
+        })
+        .then(() => {
+            const cameraItem = document.querySelector(`.camera-item[data-camera-id="${cameraUUID}"]`);
+            if (cameraItem) {
+                cameraItem.remove();
             }
-        }
-    })
-    .catch(error => {
-        console.error(`Error removing camera ${cameraUUID}:`, error.message);
-        alert(`Failed to remove camera: ${error.message}`);
-    });
+            if (window.cameraUUID === cameraUUID) {
+                const firstCamera = document.querySelector('.camera-item');
+                if (firstCamera) {
+                    firstCamera.click();
+                } else {
+                    window.location.reload();
+                }
+            }
+            const remainingCameras = document.querySelectorAll('.camera-item');
+            if (remainingCameras.length === 0) {
+                if (addCameraModalOverlay) {
+                    addCameraModalOverlay.style.display = 'flex';
+                }
+            }
+        })
+        .catch(error => {
+            console.error(`Error removing camera ${cameraUUID}:`, error.message);
+            alert(`Failed to remove camera: ${error.message}`);
+        });
 }
 
 function updatePolledDetectionData(d) {
@@ -287,52 +287,52 @@ function fetchAndUpdateMetricsForCamera(cameraUUID) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ camera_uuid: cameraUUID })
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(`Failed to fetch camera state for camera ${cameraUUID}: ${errData.detail || response.statusText}`);
-            }).catch(() => {
-                throw new Error(`Failed to fetch camera state for camera ${cameraUUID}: ${response.statusText}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        const metricsData = {
-            camera_uuid: cameraUUID,
-            start_time: data.start_time,
-            last_result: data.last_result,
-            last_time: data.last_time,
-            total_detections: data.detection_times ? data.detection_times.length : 0,
-            frame_rate: data.frame_rate,
-            live_detection_running: data.live_detection_running,
-            brightness: data.brightness,
-            contrast: data.contrast,
-            focus: data.focus,
-            sensitivity: data.sensitivity,
-            countdown_time: data.countdown_time,
-            majority_vote_threshold: data.majority_vote_threshold,
-            majority_vote_window: data.majority_vote_window,
-            printer_id: data.printer_id,
-            printer_config: data.printer_config,
-            countdown_action: data.countdown_action
-        };
-        updatePolledDetectionData(metricsData);
-        updateSelectedCameraSettings(metricsData);
-    })
-    .catch(error => {
-        console.error(`Error fetching metrics for camera ${cameraUUID}:`, error.message);
-        const emptyMetrics = {
-            camera_uuid: cameraUUID,
-            start_time: null,
-            last_result: '-',
-            last_time: null,
-            total_detections: 0,
-            frame_rate: null,
-            live_detection_running: false
-        };
-        updatePolledDetectionData(emptyMetrics);
-    });
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    throw new Error(`Failed to fetch camera state for camera ${cameraUUID}: ${errData.detail || response.statusText}`);
+                }).catch(() => {
+                    throw new Error(`Failed to fetch camera state for camera ${cameraUUID}: ${response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const metricsData = {
+                camera_uuid: cameraUUID,
+                start_time: data.start_time,
+                last_result: data.last_result,
+                last_time: data.last_time,
+                total_detections: data.detection_times ? data.detection_times.length : 0,
+                frame_rate: data.frame_rate,
+                live_detection_running: data.live_detection_running,
+                brightness: data.brightness,
+                contrast: data.contrast,
+                focus: data.focus,
+                sensitivity: data.sensitivity,
+                countdown_time: data.countdown_time,
+                majority_vote_threshold: data.majority_vote_threshold,
+                majority_vote_window: data.majority_vote_window,
+                printer_id: data.printer_id,
+                printer_config: data.printer_config,
+                countdown_action: data.countdown_action
+            };
+            updatePolledDetectionData(metricsData);
+            updateSelectedCameraSettings(metricsData);
+        })
+        .catch(error => {
+            console.error(`Error fetching metrics for camera ${cameraUUID}:`, error.message);
+            const emptyMetrics = {
+                camera_uuid: cameraUUID,
+                start_time: null,
+                last_result: '-',
+                last_time: null,
+                total_detections: 0,
+                frame_rate: null,
+                live_detection_running: false
+            };
+            updatePolledDetectionData(emptyMetrics);
+        });
 }
 
 function sendDetectionRequest(isStart) {
@@ -347,20 +347,20 @@ function sendDetectionRequest(isStart) {
         },
         body: JSON.stringify({ camera_uuid: cameraUUID })
     })
-    .then(response => {
-        if (response.ok) {
-            fetchAndUpdateMetricsForCamera(cameraUUID);
-        } else {
-            response.json().then(errData => {
-                console.error(`Failed to ${isStart ? 'start' : 'stop'} live detection for camera ${cameraUUID}. Server: ${errData.detail || response.statusText}`);
-            }).catch(() => {
-                console.error(`Failed to ${isStart ? 'start' : 'stop'} live detection for camera ${cameraUUID}. Status: ${response.status} ${response.statusText}`);
-            });
-        }
-    })
-    .catch(error => {
-        console.error(`Network error or exception during ${isStart ? 'start' : 'stop'} request for camera ${cameraUUID}:`, error);
-    });
+        .then(response => {
+            if (response.ok) {
+                fetchAndUpdateMetricsForCamera(cameraUUID);
+            } else {
+                response.json().then(errData => {
+                    console.error(`Failed to ${isStart ? 'start' : 'stop'} live detection for camera ${cameraUUID}. Server: ${errData.detail || response.statusText}`);
+                }).catch(() => {
+                    console.error(`Failed to ${isStart ? 'start' : 'stop'} live detection for camera ${cameraUUID}. Status: ${response.status} ${response.statusText}`);
+                });
+            }
+        })
+        .catch(error => {
+            console.error(`Network error or exception during ${isStart ? 'start' : 'stop'} request for camera ${cameraUUID}:`, error);
+        });
 }
 
 camDetectionToggleButton.addEventListener('click', function() {
@@ -450,7 +450,7 @@ let isSettingsVisible = false;
 
 settingsButton.addEventListener('click', function() {
     isSettingsVisible = !isSettingsVisible;
-    
+
     if (isSettingsVisible) {
         cameraDisplaySection.style.display = 'none';
         settingsSection.style.display = 'block';
@@ -491,7 +491,7 @@ async function checkNotificationsEnabled() {
 
 async function updateNotificationButtonState() {
     notificationsEnabled = await checkNotificationsEnabled();
-    
+
     if (notificationsEnabled) {
         notificationsBtn.classList.remove('disabled');
         notificationsBtn.classList.add('enabled');
@@ -557,19 +557,19 @@ function saveSetting(slider) {
         },
         body: new URLSearchParams(formData)
     })
-    .then(response => {
-        if (response.ok) {
-            const valueSpan = document.getElementById(`${slider.id}_val`);
-            if (valueSpan) {
-                valueSpan.textContent = value;
+        .then(response => {
+            if (response.ok) {
+                const valueSpan = document.getElementById(`${slider.id}_val`);
+                if (valueSpan) {
+                    valueSpan.textContent = value;
+                }
+            } else {
+                console.error(`Failed to update setting ${setting}`);
             }
-        } else {
-            console.error(`Failed to update setting ${setting}`);
-        }
-    })
-    .catch(error => {
-        console.error(`Error saving setting ${setting}:`, error);
-    });
+        })
+        .catch(error => {
+            console.error(`Error saving setting ${setting}:`, error);
+        });
 }
 
 document.querySelectorAll('.settings-form input[type="range"]').forEach(slider => {
@@ -705,20 +705,20 @@ function saveFeedSettings() {
         },
         body: JSON.stringify(settings)
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(errData.detail || 'Failed to save feed settings');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Feed settings saved successfully:', data);
-    })
-    .catch(error => {
-        console.error('Error saving feed settings:', error);
-    });
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    throw new Error(errData.detail || 'Failed to save feed settings');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Feed settings saved successfully:', data);
+        })
+        .catch(error => {
+            console.error('Error saving feed settings:', error);
+        });
 }
 
 function initializeFeedSettings() {
@@ -744,30 +744,30 @@ function loadFeedSettings() {
             'Content-Type': 'application/json',
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(errData => {
-                throw new Error(errData.detail || 'Failed to load feed settings');
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success && data.settings) {
-            const settings = data.settings;
-            updateSliderValue('streamMaxFps', settings.stream_max_fps);
-            updateSliderValue('streamTunnelFps', settings.stream_tunnel_fps);
-            updateSliderValue('streamJpegQuality', settings.stream_jpeg_quality);
-            updateSliderValue('streamMaxWidth', settings.stream_max_width);
-            updateSliderValue('detectionsPerSecond', settings.detections_per_second);
-            updateSliderValue('detectionInterval', settings.detection_interval_ms);
-            updateSliderValue('printerStatPollingRate', settings.printer_stat_polling_rate_ms);
-            updateSliderValue('minSseDispatchDelay', settings.min_sse_dispatch_delay_ms);
-        }
-    })
-    .catch(error => {
-        console.error('Error loading feed settings:', error);
-    });
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(errData => {
+                    throw new Error(errData.detail || 'Failed to load feed settings');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.settings) {
+                const settings = data.settings;
+                updateSliderValue('streamMaxFps', settings.stream_max_fps);
+                updateSliderValue('streamTunnelFps', settings.stream_tunnel_fps);
+                updateSliderValue('streamJpegQuality', settings.stream_jpeg_quality);
+                updateSliderValue('streamMaxWidth', settings.stream_max_width);
+                updateSliderValue('detectionsPerSecond', settings.detections_per_second);
+                updateSliderValue('detectionInterval', settings.detection_interval_ms);
+                updateSliderValue('printerStatPollingRate', settings.printer_stat_polling_rate_ms);
+                updateSliderValue('minSseDispatchDelay', settings.min_sse_dispatch_delay_ms);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading feed settings:', error);
+        });
 }
 
 function updateSliderValue(sliderId, value) {
@@ -793,19 +793,19 @@ function unlinkPrinter() {
         fetch(`/printer/remove/${camUUID}`, {
             method: 'POST'
         })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                fetchAndUpdateMetricsForCamera(camIdx);
-                alert('Printer unlinked successfully');
-            } else {
-                alert('Failed to unlink printer: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error unlinking printer:', error);
-            alert('Error unlinking printer');
-        });
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    fetchAndUpdateMetricsForCamera(camUUID);
+                    alert('Printer unlinked successfully');
+                } else {
+                    alert('Failed to unlink printer: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error unlinking printer:', error);
+                alert('Error unlinking printer');
+            });
     }
 }
 
@@ -830,32 +830,32 @@ function openPrinterModal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ camera_uuid: cameraUUID })
     })
-    .then(res => {
-        if (!res.ok) {
-            return res.json().then(errData => {
-                throw new Error(`Failed to fetch camera state for camera ${cameraUUID}: ${errData.detail || res.statusText}`);
-            });
-        }
-        return res.json();
-    })
-    .then(data => {
-        const formDiv = document.getElementById('modalNoPrinterForm');
-        const modalInfo = document.getElementById('modalPrinterInfo');
-        if (data.printer_config) {
-            formDiv.style.display = 'none';
-            modalInfo.style.display = 'block';
-            document.getElementById('modalPrinterName').textContent = data.printer_config.name;
-            document.getElementById('modalPrinterType').textContent = data.printer_config.printer_type + ' | ' + data.printer_config.base_url;
-        } else {
-            modalInfo.style.display = 'none';
-            formDiv.style.display = 'block';
-        }
-        printerModalOverlay.style.display = 'flex';
-    })
-    .catch(error => {
-        console.error('Error opening printer modal:', error);
-        alert('Error loading printer information: ' + error.message);
-    });
+        .then(res => {
+            if (!res.ok) {
+                return res.json().then(errData => {
+                    throw new Error(`Failed to fetch camera state for camera ${cameraUUID}: ${errData.detail || res.statusText}`);
+                });
+            }
+            return res.json();
+        })
+        .then(data => {
+            const formDiv = document.getElementById('modalNoPrinterForm');
+            const modalInfo = document.getElementById('modalPrinterInfo');
+            if (data.printer_config) {
+                formDiv.style.display = 'none';
+                modalInfo.style.display = 'block';
+                document.getElementById('modalPrinterName').textContent = data.printer_config.name;
+                document.getElementById('modalPrinterType').textContent = data.printer_config.printer_type + ' | ' + data.printer_config.base_url;
+            } else {
+                modalInfo.style.display = 'none';
+                formDiv.style.display = 'block';
+            }
+            printerModalOverlay.style.display = 'flex';
+        })
+        .catch(error => {
+            console.error('Error opening printer modal:', error);
+            alert('Error loading printer information: ' + error.message);
+        });
 }
 
 window.openPrinterModal = openPrinterModal;
@@ -964,10 +964,10 @@ document.getElementById('linkPrinterForm')?.addEventListener('submit', async (e)
             body: JSON.stringify(body)
         });
         const data = await res.json();
-        
+
         if (data.success) {
             console.log('Printer linked successfully, updating UI...');
-            await fetchAndUpdateMetricsForCamera(camIdx);
+            await fetchAndUpdateMetricsForCamera(cameraUUID);
             printerModalOverlay.style.display = 'none';
             document.getElementById('linkPrinterForm').reset();
             document.getElementById('modalOctoprintConfig').style.display = 'none';
@@ -1003,12 +1003,15 @@ addCameraModalOverlay?.addEventListener('click', function(e) {
 
 const addSerialCameraButton = document.getElementById('addSerialCameraButton');
 const addRtspCameraButton = document.getElementById('addRtspCameraButton');
+const addWebrtcCameraButton = document.getElementById('addWebrtcCameraButton');
 const cameraTypeSelection = document.getElementById('cameraTypeSelection');
 const addCameraForm = document.getElementById('addCameraForm');
 const serialCameraSetup = document.getElementById('serialCameraSetup');
 const rtspCameraSetup = document.getElementById('rtspCameraSetup');
+const webrtcCameraSetup = document.getElementById('webrtcCameraSetup');
 const serialDeviceSelect = document.getElementById('serialDevice');
 const rtspUrlInput = document.getElementById('rtspUrl');
+const webrtcUrlInput = document.getElementById('webrtcUrl');
 const serialLoading = document.getElementById('serialLoading');
 const noSerialDeviceMessage = document.getElementById('noSerialDeviceMessage');
 
@@ -1051,13 +1054,15 @@ function updatePreview() {
         hidePreview();
         return;
     }
-    
+
     cameraPreviewContainer.style.display = 'block';
     let source = '';
     if (serialCameraSetup.style.display !== 'none' && serialDeviceSelect.value) {
         source = serialDeviceSelect.value;
     } else if (rtspCameraSetup.style.display !== 'none' && rtspUrlInput.value) {
         source = rtspUrlInput.value;
+    } else if (webrtcCameraSetup.style.display !== 'none' && webrtcUrlInput.value) {
+        source = webrtcUrlInput.value;
     }
     if (!source) {
         showPreviewError();
@@ -1104,7 +1109,7 @@ addSerialCameraButton?.addEventListener('click', async () => {
             defaultOption.disabled = true;
             defaultOption.selected = true;
             serialDeviceSelect.appendChild(defaultOption);
-            
+
             devices.forEach(device => {
                 const option = document.createElement('option');
                 option.value = device;
@@ -1137,6 +1142,17 @@ addRtspCameraButton?.addEventListener('click', () => {
     rtspUrlInput.required = true;
 });
 
+addWebrtcCameraButton?.addEventListener('click', () => {
+    cameraTypeSelection.style.display = 'none';
+    addCameraForm.style.display = 'block';
+    serialCameraSetup.style.display = 'none';
+    rtspCameraSetup.style.display = 'none';
+    webrtcCameraSetup.style.display = 'block';
+    serialDeviceSelect.required = false;
+    rtspUrlInput.required = false;
+    webrtcUrlInput.required = true;
+});
+
 enablePreview?.addEventListener('change', updatePreview);
 
 serialDeviceSelect?.addEventListener('change', () => {
@@ -1151,6 +1167,12 @@ rtspUrlInput?.addEventListener('input', () => {
     }
 });
 
+webrtcUrlInput?.addEventListener('input', () => {
+    if (enablePreview.checked) {
+        schedulePreviewUpdate();
+    }
+});
+
 addCameraForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(addCameraForm);
@@ -1160,6 +1182,10 @@ addCameraForm?.addEventListener('submit', async (e) => {
             data[key] = value;
         }
     });
+
+    if (webrtcCameraSetup.style.display !== 'none' && data['source']) {
+        data['source'] = 'webrtc+' + data['source'];
+    }
 
     try {
         const response = await fetch('/camera/add', {
@@ -1193,8 +1219,10 @@ addCameraModalClose?.addEventListener('click', function() {
     cameraTypeSelection.style.display = 'flex';
     serialCameraSetup.style.display = 'none';
     rtspCameraSetup.style.display = 'none';
+    webrtcCameraSetup.style.display = 'none';
     serialDeviceSelect.required = false;
     rtspUrlInput.required = false;
+    webrtcUrlInput.required = false;
     serialDeviceSelect.innerHTML = '';
     serialDeviceSelect.style.display = 'none';
     noSerialDeviceMessage.style.display = 'none';

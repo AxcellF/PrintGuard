@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/figlet@1.8.1/lib/figlet.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div id="notificationPopup" class="notification-popup">
         <div id="notificationsContainer"></div>
@@ -35,18 +37,19 @@
         <div class="grid-item" id="camera-list-container">
             <ul id="cameraList" name="camera">
                 {% for camera_id, camera_state in camera_states.items() %}
-                    <li class="camera-item" data-camera-id="{{ camera_id }}">
-                        <button class="remove-camera-btn" title="Remove camera">×</button>
-                        <div class="camera-text-content">
-                            <div class="camera-header">
-                                <span>{{ camera_state.nickname }}</span>
-                                <span class="camera-status"></span>
-                            </div>
-                            <span class="camera-prediction">-</span>
-                            <span class="camera-prediction-time">Detected at: <span id="lastTimeValue">-</span></span>
+                <li class="camera-item" data-camera-id="{{ camera_id }}">
+                    <button class="remove-camera-btn" title="Remove camera">×</button>
+                    <div class="camera-text-content">
+                        <div class="camera-header">
+                            <span>{{ camera_state.nickname }}</span>
+                            <span class="camera-status"></span>
                         </div>
-                        <img src="{{ url_for('static', path='images/default_icon.png') }}" alt="Camera Icon" class="camera-video-preview" id="cameraPreview">
-                    </li>
+                        <span class="camera-prediction">-</span>
+                        <span class="camera-prediction-time">Detected at: <span id="lastTimeValue">-</span></span>
+                    </div>
+                    <img src="{{ url_for('static', path='images/default_icon.png') }}" alt="Camera Icon"
+                        class="camera-video-preview" id="cameraPreview">
+                </li>
                 {% endfor %}
             </ul>
             {% if not camera_states %}
@@ -81,26 +84,27 @@
             </div>
             <div class="settings-section" style="display: none;">
                 <form action="{{ url_for('update_settings') }}" method="post" class="settings-form settings-grid">
-                    <input type="hidden" id="camera_uuid" name="camera_uuid"  value="">
+                    <input type="hidden" id="camera_uuid" name="camera_uuid" value="">
                     <div class="settings-item">
                         <label for="sensitivity">Sensitivity: <span id="sensitivity_val"></span></label>
-                        <input type="range" id="sensitivity" name="sensitivity" min="0" max="2" step="0.05"  value="-" />
+                        <input type="range" id="sensitivity" name="sensitivity" min="0" max="2" step="0.05" value="-" />
                     </div>
                     <div class="settings-item">
                         <label for="brightness">Brightness: <span id="brightness_val"></span></label>
-                        <input type="range" id="brightness" name="brightness" min="0" max="2" step="0.05"  value="-" />
+                        <input type="range" id="brightness" name="brightness" min="0" max="2" step="0.05" value="-" />
                     </div>
                     <div class="settings-item">
                         <label for="contrast">Contrast: <span id="contrast_val"></span></label>
-                        <input type="range" id="contrast" name="contrast" min="0" max="2" step="0.05"  value="-" />
+                        <input type="range" id="contrast" name="contrast" min="0" max="2" step="0.05" value="-" />
                     </div>
                     <div class="settings-item">
                         <label for="focus">Focus: <span id="focus_val"></span></label>
-                        <input type="range" id="focus" name="focus" min="0" max="2" step="0.05"  value="-" />
+                        <input type="range" id="focus" name="focus" min="0" max="2" step="0.05" value="-" />
                     </div>
                     <div class="settings-item">
                         <label for="countdown_time">Countdown Time (s): <span id="countdown_time_val"></span></label>
-                        <input type="range" id="countdown_time" name="countdown_time" min="0" max="300" step="5"  value="-" />
+                        <input type="range" id="countdown_time" name="countdown_time" min="0" max="300" step="5"
+                            value="-" />
                     </div>
                     <div class="settings-item">
                         <label for="countdown_action">Countdown Action</label>
@@ -111,12 +115,16 @@
                         </select>
                     </div>
                     <div class="settings-item">
-                        <label for="majority_vote_threshold">Majority Vote Threshold: <span id="majority_vote_threshold_val"></span></label>
-                        <input type="range" id="majority_vote_threshold" name="majority_vote_threshold" min="1" max="20"  value="-" />
+                        <label for="majority_vote_threshold">Majority Vote Threshold: <span
+                                id="majority_vote_threshold_val"></span></label>
+                        <input type="range" id="majority_vote_threshold" name="majority_vote_threshold" min="1" max="20"
+                            value="-" />
                     </div>
                     <div class="settings-item">
-                        <label for="majority_vote_window">Majority Vote Window (frames): <span id="majority_vote_window_val"></span></label>
-                        <input type="range" id="majority_vote_window" name="majority_vote_window" min="1" max="100"  value="-" />
+                        <label for="majority_vote_window">Majority Vote Window (frames): <span
+                                id="majority_vote_window_val"></span></label>
+                        <input type="range" id="majority_vote_window" name="majority_vote_window" min="1" max="100"
+                            value="-" />
                     </div>
                     <div class="settings-item">
                         <button class="start-stop-btn" id="printerConfigBtn" style="display: none;">
@@ -154,11 +162,13 @@
             <div class="setup-modal-content">
                 <div class="setup-section">
                     <h3 class="setup-section-title">Initial Setup</h3>
-                    <p>Access the initial setup page to reconfigure your 3D printer settings, camera parameters, and notification preferences.</p>
-                    <p>This will take you through the complete setup process again, allowing you to modify all system configurations.</p>
+                    <p>Access the initial setup page to reconfigure your 3D printer settings, camera parameters, and
+                        notification preferences.</p>
+                    <p>This will take you through the complete setup process again, allowing you to modify all system
+                        configurations.</p>
                     <button class="start-stop-btn" id="goToSetupBtn">Go to Initial Setup</button>
                 </div>
-                
+
                 <div class="setup-section">
                     <h3 class="setup-section-title">Feed Settings</h3>
                     <p>Adjust stream quality and detection parameters for optimal performance.</p>
@@ -166,35 +176,49 @@
                         <div class="feed-settings-grid">
                             <div class="feed-setting-item">
                                 <label for="streamMaxFps">Max FPS: <span id="streamMaxFps_val">30</span></label>
-                                <input type="range" id="streamMaxFps" name="streamMaxFps" min="1" max="60" step="1" value="30" />
+                                <input type="range" id="streamMaxFps" name="streamMaxFps" min="1" max="60" step="1"
+                                    value="30" />
                             </div>
                             <div class="feed-setting-item">
-                                <label for="streamTunnelFps">Tunnel FPS: <span id="streamTunnelFps_val">10</span></label>
-                                <input type="range" id="streamTunnelFps" name="streamTunnelFps" min="1" max="30" step="1" value="10" />
+                                <label for="streamTunnelFps">Tunnel FPS: <span
+                                        id="streamTunnelFps_val">10</span></label>
+                                <input type="range" id="streamTunnelFps" name="streamTunnelFps" min="1" max="30"
+                                    step="1" value="10" />
                             </div>
                             <div class="feed-setting-item">
-                                <label for="streamJpegQuality">JPEG Quality: <span id="streamJpegQuality_val">85</span></label>
-                                <input type="range" id="streamJpegQuality" name="streamJpegQuality" min="10" max="100" step="5" value="85" />
+                                <label for="streamJpegQuality">JPEG Quality: <span
+                                        id="streamJpegQuality_val">85</span></label>
+                                <input type="range" id="streamJpegQuality" name="streamJpegQuality" min="10" max="100"
+                                    step="5" value="85" />
                             </div>
                             <div class="feed-setting-item">
                                 <label for="streamMaxWidth">Max Width: <span id="streamMaxWidth_val">1280</span></label>
-                                <input type="range" id="streamMaxWidth" name="streamMaxWidth" min="320" max="1920" step="80" value="1280" />
+                                <input type="range" id="streamMaxWidth" name="streamMaxWidth" min="320" max="1920"
+                                    step="80" value="1280" />
                             </div>
                             <div class="feed-setting-item">
-                                <label for="detectionsPerSecond">Detections/Sec: <span id="detectionsPerSecond_val">15</span></label>
-                                <input type="range" id="detectionsPerSecond" name="detectionsPerSecond" min="1" max="30" step="1" value="15" />
+                                <label for="detectionsPerSecond">Detections/Sec: <span
+                                        id="detectionsPerSecond_val">15</span></label>
+                                <input type="range" id="detectionsPerSecond" name="detectionsPerSecond" min="1" max="30"
+                                    step="1" value="15" />
                             </div>
                             <div class="feed-setting-item">
-                                <label for="detectionInterval">Detection Interval (ms): <span id="detectionInterval_val">67</span></label>
-                                <input type="range" id="detectionInterval" name="detectionInterval" min="33" max="1000" step="17" value="67" />
+                                <label for="detectionInterval">Detection Interval (ms): <span
+                                        id="detectionInterval_val">67</span></label>
+                                <input type="range" id="detectionInterval" name="detectionInterval" min="33" max="1000"
+                                    step="17" value="67" />
                             </div>
                             <div class="feed-setting-item">
-                                <label for="printerStatPollingRate">Printer Stat Polling (ms): <span id="printerStatPollingRate_val">2000</span></label>
-                                <input type="range" id="printerStatPollingRate" name="printerStatPollingRate" min="250" max="10000" step="250" value="2000" />
+                                <label for="printerStatPollingRate">Printer Stat Polling (ms): <span
+                                        id="printerStatPollingRate_val">2000</span></label>
+                                <input type="range" id="printerStatPollingRate" name="printerStatPollingRate" min="250"
+                                    max="10000" step="250" value="2000" />
                             </div>
                             <div class="feed-setting-item">
-                                <label for="minSseDispatchDelay">Min SSE Dispatch Delay (ms): <span id="minSseDispatchDelay_val">100</span></label>
-                                <input type="range" id="minSseDispatchDelay" name="minSseDispatchDelay" min="0" max="10000" step="20" value="100" />
+                                <label for="minSseDispatchDelay">Min SSE Dispatch Delay (ms): <span
+                                        id="minSseDispatchDelay_val">100</span></label>
+                                <input type="range" id="minSseDispatchDelay" name="minSseDispatchDelay" min="0"
+                                    max="10000" step="20" value="100" />
                             </div>
                         </div>
                     </form>
@@ -244,7 +268,8 @@
                                 <input type="text" id="modalOctoprintApiKeyInput" name="api_key" required />
                             </div>
                         </div>
-                        <button type="submit" id="modalLinkPrinterSubmit" class="start-stop-btn primary">Link Printer</button>
+                        <button type="submit" id="modalLinkPrinterSubmit" class="start-stop-btn primary">Link
+                            Printer</button>
                     </form>
                 </div>
             </div>
@@ -257,9 +282,11 @@
                 <button class="setup-modal-close" id="addCameraModalClose">×</button>
             </div>
             <div class="setup-modal-content">
-                <div id="cameraTypeSelection" class="button-group" style="display: flex; justify-content: center; gap: 10px;">
+                <div id="cameraTypeSelection" class="button-group"
+                    style="display: flex; justify-content: center; gap: 10px;">
                     <button id="addSerialCameraButton" class="start-stop-btn">Setup Serial (USB) Camera</button>
                     <button id="addRtspCameraButton" class="start-stop-btn">Setup RTSP Camera</button>
+                    <button id="addWebrtcCameraButton" class="start-stop-btn">Setup WebRTC Camera</button>
                 </div>
                 <form id="addCameraForm" style="display:none;">
                     <div class="form-group">
@@ -273,7 +300,8 @@
                                 <div class="loader"></div>
                                 <span>Loading devices...</span>
                             </div>
-                            <select id="serialDevice" name="source" class="settings-dropdown" required style="display: none;">
+                            <select id="serialDevice" name="source" class="settings-dropdown" required
+                                style="display: none;">
                             </select>
                             <p id="noSerialDeviceMessage" style="display: none;">No serial devices available.</p>
                         </div>
@@ -281,7 +309,13 @@
                     <div id="rtspCameraSetup" style="display:none;">
                         <div class="form-group">
                             <label for="rtspUrl">RTSP Stream URL</label>
-                            <input type="url" id="rtspUrl" name="source" placeholder="rtsp://0.0.0.0:554/stream" required />
+                            <input type="url" id="rtspUrl" name="source" placeholder="rtsp://0.0.0.0:554/stream" />
+                        </div>
+                    </div>
+                    <div id="webrtcCameraSetup" style="display:none;">
+                        <div class="form-group">
+                            <label for="webrtcUrl">WebRTC Stream URL</label>
+                            <input type="url" id="webrtcUrl" name="source" placeholder="https://..." />
                         </div>
                     </div>
                     <div class="form-group">
@@ -293,13 +327,17 @@
                     <div id="cameraPreviewContainer" style="display: none;">
                         <div class="form-group">
                             <label>Camera Preview</label>
-                            <div id="cameraPreviewWrapper" style="position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
-                                <img id="cameraPreviewImage" src="" alt="Camera Preview" style="width: 100%; height: auto; border: 2px dotted var(--text-primary); display: none;">
-                                <div id="cameraPreviewLoading" style="display: none; text-align: center; padding: 20px; border: 2px dotted var(--text-primary); background: var(--background-tertiary);">
+                            <div id="cameraPreviewWrapper"
+                                style="position: relative; width: 100%; max-width: 400px; margin: 0 auto;">
+                                <img id="cameraPreviewImage" src="" alt="Camera Preview"
+                                    style="width: 100%; height: auto; border: 2px dotted var(--text-primary); display: none;">
+                                <div id="cameraPreviewLoading"
+                                    style="display: none; text-align: center; padding: 20px; border: 2px dotted var(--text-primary); background: var(--background-tertiary);">
                                     <div class="loading-spinner" style="margin: 0 auto 10px;"></div>
                                     <p>Loading camera preview...</p>
                                 </div>
-                                <div id="cameraPreviewError" style="display: none; text-align: center; padding: 20px; border: 2px dotted var(--color-danger); background: var(--error-bg); color: var(--color-danger);">
+                                <div id="cameraPreviewError"
+                                    style="display: none; text-align: center; padding: 20px; border: 2px dotted var(--color-danger); background: var(--error-bg); color: var(--color-danger);">
                                     <p>Unable to load camera preview</p>
                                 </div>
                             </div>
@@ -311,4 +349,5 @@
         </div>
     </div>
 </body>
+
 </html>

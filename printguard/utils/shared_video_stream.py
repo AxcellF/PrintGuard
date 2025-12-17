@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 
 from .camera_utils import get_camera_state_sync
+from .webrtc_client import WebRTCClient
 
 
 class SharedVideoStream:
@@ -47,23 +48,37 @@ class SharedVideoStream:
         # pylint: disable=E1101
         try:
             source = self.source
-            if isinstance(source, str) and source.isdigit():
-                source = int(source)
-            self.cap = cv2.VideoCapture(source, cv2.CAP_ANY)
+            logging.debug(f"DEBUG: capture_loop source: {repr(source)}")
+            if isinstance(source, str):
+                source = source.strip()
+            
+            if isinstance(source, str) and source.startswith("webrtc+"):
+                 source = source.replace("webrtc+", "", 1)
+                 logging.info("Explicit WebRTC source detected: %s", source)
+                 self.cap = WebRTCClient(source)
+            elif isinstance(source, str) and (source.startswith("http://") or source.startswith("https://")) and "webrtc" in source.lower():
+                 logging.info("Detected WebRTC source via URL pattern: %s", source)
+                 self.cap = WebRTCClient(source)
+            else:
+                if isinstance(source, str) and source.isdigit():
+                    source = int(source)
+                self.cap = cv2.VideoCapture(source, cv2.CAP_ANY)
             if not self.cap.isOpened():
                 logging.error("Failed to open camera source %s for shared stream", source)
                 return
-            self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-            if isinstance(source, str) and source.startswith('rtp://'):
-                self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
+            if isinstance(self.cap, cv2.VideoCapture):
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                if isinstance(source, str) and source.startswith('rtp://'):
+                    self.cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
             consecutive_failures = 0
-            max_consecutive_failures = 10
+            max_consecutive_failures = 30 # WebRTC sometimes took a few attempts during testing
             while self.is_running:
                 ret, frame = self.cap.read()
                 if not ret:
                     consecutive_failures += 1
-                    logging.warning("Failed to read frame from camera %s (failure %d/%d)",
-                                  self.camera_uuid, consecutive_failures, max_consecutive_failures)
+                    if consecutive_failures % 10 == 0:
+                        logging.warning("Failed to read frame from camera %s (failure %d/%d)",
+                                    self.camera_uuid, consecutive_failures, max_consecutive_failures)
                     if consecutive_failures >= max_consecutive_failures:
                         logging.error(
                             "Too many consecutive failures for camera %s, stopping stream",
@@ -78,11 +93,12 @@ class SharedVideoStream:
                     self.last_frame_time = time.time()
                     self.frame_count += 1
                 time.sleep(0.001)
-        except (cv2.error, OSError, ValueError) as e:
+        except (cv2.error, OSError, ValueError, Exception) as e:
             logging.error("Error in shared video stream for camera %s: %s", self.camera_uuid, e)
         finally:
-            if self.cap and self.cap.isOpened():
-                self.cap.release()
+            if self.cap:
+                if hasattr(self.cap, 'release'):
+                    self.cap.release()
 
     def get_frame(self) -> Optional[np.ndarray]:
         """Get the latest frame from the shared stream."""

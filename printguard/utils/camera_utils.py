@@ -9,6 +9,7 @@ import cv2
 
 from ..models import CameraState
 from .camera_state_manager import get_camera_state_manager
+from .webrtc_client import WebRTCClient
 
 
 async def add_camera(source, nickname):
@@ -104,7 +105,12 @@ def open_camera(camera_uuid) -> cv2.VideoCapture:
     if isinstance(source, str) and source.isdigit():
         source = int(source)
 
-    cap = cv2.VideoCapture(source, cv2.CAP_ANY)
+    if isinstance(source, str) and source.startswith("webrtc+"):
+        source = source.replace("webrtc+", "", 1)
+        cap = WebRTCClient(url=source)
+    else:
+        cap = cv2.VideoCapture(source, cv2.CAP_ANY)
+        
     if not cap.isOpened():
         raise RuntimeError(f"Failed to open camera with UUID {camera_uuid}")
     return cap
