@@ -1,4 +1,7 @@
 from urllib.parse import urlparse
+import urllib.request
+import urllib.error
+import asyncio
 import logging
 import json
 from pywebpush import WebPushException, webpush
@@ -59,6 +62,56 @@ async def send_defect_notification(alert_id):
         send_notification(notification)
     else:
         logging.error("No alert found for ID: %s", alert_id)
+
+async def send_home_assistant_notification(alert_id):
+    """Send a notification to Home Assistant webhook if configured.
+
+    Args:
+        alert_id (str): The ID of the alert to send.
+    """
+    alert = get_alert(alert_id)
+    if not alert:
+        logging.warning("Cannot send HA notification: Alert %s not found", alert_id)
+        return
+
+    # pylint: disable=import-outside-toplevel
+    from .camera_utils import get_camera_state
+    camera_state = await get_camera_state(alert.camera_uuid)
+    webhook_url = camera_state.home_assistant_webhook_url
+
+    if not webhook_url:
+        logging.debug("No Home Assistant webhook URL configured for camera %s", camera_state.nickname)
+        return
+
+    payload = {
+        "event_type": "defect_detected",
+        "camera_uuid": alert.camera_uuid,
+        "camera_name": camera_state.nickname,
+        "alert_id": alert.id,
+        "countdown_time": alert.countdown_time,
+        "countdown_action": alert.countdown_action,
+        "timestamp": alert.timestamp,
+        "message": alert.message
+    }
+
+    def _send_request():
+        try:
+            req = urllib.request.Request(
+                webhook_url,
+                data=json.dumps(payload).encode('utf-8'),
+                headers={'Content-Type': 'application/json'}
+            )
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status >= 400:
+                    logging.error("Home Assistant webhook failed with status: %s", response.status)
+                else:
+                    logging.debug("Home Assistant webhook sent successfully")
+        except urllib.error.URLError as e:
+            logging.error("Failed to send Home Assistant webhook: %s", e)
+        except Exception as e:
+            logging.error("Unexpected error sending Home Assistant webhook: %s", e)
+
+    await asyncio.to_thread(_send_request)
 
 def send_notification(notification: Notification):
     """Send a push notification to all current subscriptions.

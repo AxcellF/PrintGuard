@@ -69,20 +69,6 @@ def reset_throttle_for_data_type(sse_data_type: SSEDataType):
         del _last_dispatch_times[sse_data_type]
         logging.debug("Reset throttle for SSE data type: %s", sse_data_type.value)
 
-def _calculate_frame_rate(detection_history):
-    """Calculate frames per second based on detection timestamps.
-
-    Args:
-        detection_history (list of tuples): Each tuple is (timestamp, label).
-
-    Returns:
-        float: The calculated frame rate, or 0.0 if insufficient data.
-    """
-    if len(detection_history) < 2:
-        return 0.0
-    times = [t for t, _ in detection_history]
-    duration = times[-1] - times[0]
-    return (len(times) - 1) / duration if duration > 0 else 0.0
 
 async def _sse_update_camera_state_func(camera_uuid):
     """Build and send a camera state update SSE packet.
@@ -91,11 +77,11 @@ async def _sse_update_camera_state_func(camera_uuid):
         camera_uuid (str): The UUID of the camera.
     """
     # pylint: disable=import-outside-toplevel
-    from .camera_utils import get_camera_state
+    from .camera_utils import get_camera_state, calculate_frame_rate
     state = await get_camera_state(camera_uuid)
     detection_history = state.detection_history
     total_detections = len(detection_history)
-    frame_rate = _calculate_frame_rate(detection_history)
+    frame_rate = calculate_frame_rate(detection_history)
     data = {
         "start_time": state.start_time,
         "last_result": state.last_result,

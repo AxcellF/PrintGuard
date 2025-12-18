@@ -145,6 +145,7 @@ class CameraState(BaseModel):
     majority_vote_window: int = None
     printer_id: Optional[str] = None
     printer_config: Optional[Dict] = None
+    home_assistant_webhook_url: Optional[str] = None
 
     def __init__(self, **data):
         if 'brightness' not in data:

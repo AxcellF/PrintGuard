@@ -33,6 +33,7 @@ const settingsMajorityVoteThresholdLabel = document.getElementById('majority_vot
 const settingsMajorityVoteWindow = document.getElementById('majority_vote_window');
 const settingsMajorityVoteWindowLabel = document.getElementById('majority_vote_window_val');
 const settingsCountdownAction = document.getElementById('countdown_action');
+const settingsHomeAssistantWebhookUrl = document.getElementById('home_assistant_webhook_url');
 
 const addCameraModalOverlay = document.getElementById('addCameraModalOverlay');
 const addCameraModalClose = document.getElementById('addCameraModalClose');
@@ -70,7 +71,7 @@ function updateRecentDetectionResult(result, doc_element) {
 
 function updateRecentDetectionTime(last_time, doc_element) {
     try {
-        if (!last_time) {throw 'exit';}
+        if (!last_time) { throw 'exit'; }
         const date = new Date(last_time * 1000);
         const timeString = date.toISOString().substr(11, 8);
         doc_element.textContent = timeString;
@@ -138,6 +139,9 @@ function updateSelectedCameraSettings(d) {
     settingsMajorityVoteWindow.value = d.majority_vote_window;
     updateSliderFill(settingsMajorityVoteWindow);
     settingsCountdownAction.value = d.countdown_action;
+    if (document.activeElement !== settingsHomeAssistantWebhookUrl) {
+        settingsHomeAssistantWebhookUrl.value = d.home_assistant_webhook_url || '';
+    }
     currentCameraPrinterConfig = d.printer_config;
 
     const hasPrinter = d.printer_id !== null && d.printer_id !== undefined;
@@ -314,8 +318,10 @@ function fetchAndUpdateMetricsForCamera(cameraUUID) {
                 majority_vote_threshold: data.majority_vote_threshold,
                 majority_vote_window: data.majority_vote_window,
                 printer_id: data.printer_id,
+                printer_id: data.printer_id,
                 printer_config: data.printer_config,
-                countdown_action: data.countdown_action
+                countdown_action: data.countdown_action,
+                home_assistant_webhook_url: data.home_assistant_webhook_url
             };
             updatePolledDetectionData(metricsData);
             updateSelectedCameraSettings(metricsData);
@@ -363,7 +369,7 @@ function sendDetectionRequest(isStart) {
         });
 }
 
-camDetectionToggleButton.addEventListener('click', function() {
+camDetectionToggleButton.addEventListener('click', function () {
     if (camDetectionToggleButton.textContent === startDetectionBtnLabel) {
         camDetectionToggleButton.textContent = stopDetectionBtnLabel;
         sendDetectionRequest(true);
@@ -378,7 +384,7 @@ camDetectionToggleButton.addEventListener('click', function() {
 render_ascii_title(asciiTitle, 'PrintGuard');
 
 cameraItems.forEach(item => {
-    item.addEventListener('click', function() {
+    item.addEventListener('click', function () {
         cameraItems.forEach(i => i.classList.remove('selected'));
         this.classList.add('selected');
         const cameraId = this.dataset.cameraId;
@@ -398,7 +404,7 @@ cameraItems.forEach(item => {
     });
 
     const removeButton = item.querySelector('.remove-camera-btn');
-    removeButton.addEventListener('click', function(event) {
+    removeButton.addEventListener('click', function (event) {
         event.stopPropagation();
         const cameraId = item.dataset.cameraId;
         removeCamera(cameraId);
@@ -417,7 +423,7 @@ document.addEventListener('printerStateUpdated', evt => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const firstCameraItem = cameraItems[0];
     if (firstCameraItem) {
         const cameraId = firstCameraItem.dataset.cameraId;
@@ -436,19 +442,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-addCameraBtn?.addEventListener('click', function(e) {
+addCameraBtn?.addEventListener('click', function (e) {
     e.preventDefault();
     addCameraModalOverlay.style.display = 'flex';
 });
 
-addFirstCameraBtn?.addEventListener('click', function(e) {
+addFirstCameraBtn?.addEventListener('click', function (e) {
     e.preventDefault();
     addCameraModalOverlay.style.display = 'flex';
 });
 
 let isSettingsVisible = false;
 
-settingsButton.addEventListener('click', function() {
+settingsButton.addEventListener('click', function () {
     isSettingsVisible = !isSettingsVisible;
 
     if (isSettingsVisible) {
@@ -513,7 +519,7 @@ notificationsBtn.addEventListener('click', async () => {
             console.debug('Unsubscribing from notifications...');
             await unsubscribeFromPush();
             try {
-                const res = await fetch('/notification/unsubscribe', {method: 'POST'});
+                const res = await fetch('/notification/unsubscribe', { method: 'POST' });
                 if (!res.ok) console.error('Server unsubscribe failed:', res.status);
             } catch (err) {
                 console.error('Error during server unsubscribe:', err);
@@ -588,6 +594,13 @@ document.getElementById('countdown_action').addEventListener('change', (e) => {
     saveSetting(e.target);
 });
 
+const haWebhookUrlInput = document.getElementById('home_assistant_webhook_url');
+if (haWebhookUrlInput) {
+    haWebhookUrlInput.addEventListener('change', (e) => {
+        saveSetting(e.target);
+    });
+}
+
 document.querySelector('.settings-form')?.addEventListener('submit', (e) => {
     e.preventDefault();
 });
@@ -632,7 +645,7 @@ const configureSetupBtn = document.getElementById('configureSetupBtn');
 const setupModalOverlay = document.getElementById('setupModalOverlay');
 const setupModalClose = document.getElementById('setupModalClose');
 
-configureSetupBtn?.addEventListener('click', function(e) {
+configureSetupBtn?.addEventListener('click', function (e) {
     e.preventDefault();
     setupModalOverlay.style.display = 'flex';
     document.body.style.overflow = 'hidden';
@@ -642,7 +655,7 @@ configureSetupBtn?.addEventListener('click', function(e) {
 });
 
 const goToSetupBtn = document.getElementById('goToSetupBtn');
-goToSetupBtn?.addEventListener('click', function() {
+goToSetupBtn?.addEventListener('click', function () {
     window.location.href = '/setup';
 });
 
@@ -780,7 +793,7 @@ function updateSliderValue(sliderId, value) {
     }
 }
 
-setupModalClose?.addEventListener('click', function() {
+setupModalClose?.addEventListener('click', function () {
     setupModalOverlay.style.display = 'none';
     document.body.style.overflow = '';
 });
@@ -817,10 +830,10 @@ const printerModalClose = document.getElementById('printerModalClose');
 
 function openPrinterModal() {
     const cameraUUID = settingsCameraUUID.value;
-    fetch ('/sse/start-polling', {
+    fetch('/sse/start-polling', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({camera_uuid: cameraUUID})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ camera_uuid: cameraUUID })
     });
     if (cameraUUID !== undefined && cameraUUID !== null) {
         settingsCameraUUID.value = cameraUUID;
@@ -870,8 +883,8 @@ function stopPrinterStatusPolling() {
     if (cameraUUID !== null && cameraUUID !== undefined) {
         fetch('/sse/stop-polling', {
             method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({camera_uuid: cameraUUID})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ camera_uuid: cameraUUID })
         });
     }
 }
@@ -880,7 +893,7 @@ document.getElementById('modalCancelPrintBtn').addEventListener('click', () => {
     const cameraUUID = settingsCameraUUID.value;
     fetch(`/printer/cancel/${cameraUUID}`, {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
     }).then(response => {
         if (response.ok) {
@@ -897,7 +910,7 @@ document.getElementById('modalPausePrintBtn').addEventListener('click', () => {
     const cameraUUID = settingsCameraUUID.value;
     fetch(`/printer/pause/${cameraUUID}`, {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({})
     }).then(response => {
         if (response.ok) {
@@ -989,13 +1002,13 @@ document.getElementById('linkPrinterForm')?.addEventListener('submit', async (e)
     }
 });
 
-addCameraModalClose?.addEventListener('click', function() {
+addCameraModalClose?.addEventListener('click', function () {
     if (addCameraModalOverlay) {
         addCameraModalOverlay.style.display = 'none';
     }
 });
 
-addCameraModalOverlay?.addEventListener('click', function(e) {
+addCameraModalOverlay?.addEventListener('click', function (e) {
     if (e.target === addCameraModalOverlay) {
         addCameraModalOverlay.style.display = 'none';
     }
@@ -1071,10 +1084,10 @@ function updatePreview() {
     showPreviewLoading();
     const previewUrl = `/camera/preview?source=${encodeURIComponent(source)}`;
     const img = new Image();
-    img.onload = function() {
+    img.onload = function () {
         showPreviewImage(previewUrl);
     };
-    img.onerror = function() {
+    img.onerror = function () {
         showPreviewError();
     };
     img.src = previewUrl;
@@ -1212,7 +1225,7 @@ addCameraForm?.addEventListener('submit', async (e) => {
     }
 });
 
-addCameraModalClose?.addEventListener('click', function() {
+addCameraModalClose?.addEventListener('click', function () {
     addCameraModalOverlay.style.display = 'none';
     addCameraForm.reset();
     addCameraForm.style.display = 'none';

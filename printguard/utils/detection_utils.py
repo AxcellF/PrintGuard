@@ -9,7 +9,7 @@ from .sse_utils import append_new_outbound_packet
 from .camera_utils import (get_camera_state, get_camera_state_sync,
                            update_camera_state, update_camera_detection_history)
 from .printer_utils import get_printer_config, suspend_print_job
-from .notification_utils import send_defect_notification
+from .notification_utils import send_defect_notification, send_home_assistant_notification
 from ..models import Alert, AlertAction, SSEDataType
 
 def _passed_majority_vote(camera_state):
@@ -89,6 +89,7 @@ async def _create_alert_and_notify(camera_state_ref, camera_uuid, frame, timesta
     asyncio.create_task(_terminate_alert_after_cooldown(alert))
     await update_camera_state(camera_uuid, {"current_alert_id": alert_id})
     await send_defect_notification(alert_id)
+    await send_home_assistant_notification(alert_id)
     return alert
 
 async def _live_detection_loop(app_state, camera_uuid):

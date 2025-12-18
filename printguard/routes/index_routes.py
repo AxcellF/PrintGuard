@@ -55,6 +55,7 @@ async def update_settings(request: Request,
                           countdown_action: str = Form(...),
                           majority_vote_threshold: int = Form(...),
                           majority_vote_window: int = Form(...),
+                          home_assistant_webhook_url: str = Form(None),
                           ):
     """Update camera settings and detection parameters.
 
@@ -82,6 +83,7 @@ async def update_settings(request: Request,
         "countdown_action": countdown_action,
         "majority_vote_threshold": majority_vote_threshold,
         "majority_vote_window": majority_vote_window,
+        "home_assistant_webhook_url": home_assistant_webhook_url,
     })
     return RedirectResponse("/", status_code=303)
 

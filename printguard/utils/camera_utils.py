@@ -185,3 +185,18 @@ async def update_camera_state(camera_uuid, new_states):
     """
     manager = get_camera_state_manager()
     return await manager.update_camera_state(camera_uuid, new_states)
+
+def calculate_frame_rate(detection_history):
+    """Calculate frames per second based on detection timestamps.
+
+    Args:
+        detection_history (list of tuples): Each tuple is (timestamp, label).
+
+    Returns:
+        float: The calculated frame rate, or 0.0 if insufficient data.
+    """
+    if len(detection_history) < 2:
+        return 0.0
+    times = [t for t, _ in detection_history]
+    duration = times[-1] - times[0]
+    return (len(times) - 1) / duration if duration > 0 else 0.0

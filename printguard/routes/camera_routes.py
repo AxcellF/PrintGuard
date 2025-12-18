@@ -7,7 +7,7 @@ from fastapi import APIRouter, Body, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from ..utils.camera_utils import (add_camera, find_available_serial_cameras,
-                                  get_camera_state)
+                                  get_camera_state, calculate_frame_rate)
 from ..utils.camera_utils import remove_camera as remove_camera_util
 from ..utils.shared_video_stream import get_shared_stream_manager
 from ..utils.stream_utils import generate_frames
@@ -30,6 +30,8 @@ async def get_camera_state_ep(request: Request, camera_uuid: str = Body(..., emb
     detection_times = [t for t, _ in camera_state.detection_history] if (
         camera_state.detection_history
         ) else []
+    total_detections = len(camera_state.detection_history)
+    frame_rate = calculate_frame_rate(camera_state.detection_history)
     response = {
         "nickname": camera_state.nickname,
         "start_time": camera_state.start_time,
@@ -48,7 +50,10 @@ async def get_camera_state_ep(request: Request, camera_uuid: str = Body(..., emb
         "sensitivity": camera_state.sensitivity,
         "printer_id": camera_state.printer_id,
         "printer_config": camera_state.printer_config,
-        "countdown_action": camera_state.countdown_action
+        "countdown_action": camera_state.countdown_action,
+        "total_detections": total_detections,
+        "frame_rate": frame_rate,
+        "home_assistant_webhook_url": camera_state.home_assistant_webhook_url
     }
     return response
 
