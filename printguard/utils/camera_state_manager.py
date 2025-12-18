@@ -34,7 +34,10 @@ class CameraStateManager:
         saved_states = config.get(SavedConfig.CAMERA_STATES, {})
         for camera_uuid, state_data in saved_states.items():
             try:
-                self._states[camera_uuid] = CameraState(**state_data)
+                state = CameraState(**state_data)
+                if state.total_detections == 0 and len(state.detection_history) > 0:
+                    state.total_detections = len(state.detection_history)
+                self._states[camera_uuid] = state
             except (ValueError, TypeError, ValidationError) as e:
                 logging.warning("Failed to load camera state for UUID %s: %s", camera_uuid, e)
                 try:
@@ -43,16 +46,17 @@ class CameraStateManager:
                 except Exception as ex:
                     logging.error("Failed to create fresh camera state for UUID %s: %s", camera_uuid, ex)
 
-    def _save_states_to_config(self):
+    async def _save_states_to_config(self):
         """Saves the current camera states to the application's configuration file."""
         try:
             states_data = {}
             for camera_uuid, state in self._states.items():
                 state_dict = state.model_dump(exclude={'live_detection_task'})
-                if 'detection_history' in state_dict and len(state_dict['detection_history']) > 1000:
-                    state_dict['detection_history'] = state_dict['detection_history'][-1000:]
+                # No need to truncate here as it's maintained in update_camera_detection_history
                 states_data[camera_uuid] = state_dict
-            update_config({SavedConfig.CAMERA_STATES: states_data})
+            
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(None, update_config, {SavedConfig.CAMERA_STATES: states_data})
         except Exception as e:
             logging.error("Failed to save camera states to config: %s", e)
 
@@ -69,7 +73,8 @@ class CameraStateManager:
         async with self.lock:
             if camera_uuid not in self._states or reset:
                 self._states[camera_uuid] = CameraState()
-                self._save_states_to_config()
+                self._states[camera_uuid] = CameraState()
+                await self._save_states_to_config()
             return self._states[camera_uuid]
 
     async def update_camera_state(self, camera_uuid: str,
@@ -100,7 +105,7 @@ class CameraStateManager:
                     else:
                         logging.warning("Key '%s' not found in camera state for UUID %s.",
                                         key, camera_uuid)
-            self._save_states_to_config()
+            await self._save_states_to_config()
             return camera_state_ref
 
     async def update_camera_detection_history(self, camera_uuid: str,
@@ -121,11 +126,12 @@ class CameraStateManager:
             camera_state_ref = self._states.get(camera_uuid)
             if camera_state_ref:
                 camera_state_ref.detection_history.append((time_val, pred))
-                max_history = 10000
+                camera_state_ref.total_detections += 1
+                max_history = 200
                 if len(camera_state_ref.detection_history) > max_history:
                     camera_state_ref.detection_history = camera_state_ref.detection_history[-max_history:]
-                if len(camera_state_ref.detection_history) % 100 == 0:
-                    self._save_states_to_config()
+                if camera_state_ref.total_detections % 100 == 0:
+                    asyncio.create_task(self._save_states_to_config())
                 return camera_state_ref
         return None
 
@@ -152,7 +158,8 @@ class CameraStateManager:
             if camera_uuid in self._states:
                 await self.cleanup_camera_resources(camera_uuid)
                 del self._states[camera_uuid]
-                self._save_states_to_config()
+                del self._states[camera_uuid]
+                await self._save_states_to_config()
                 logging.info("Successfully removed camera %s.", camera_uuid)
                 return True
             logging.warning("Attempted to remove non-existent camera %s.", camera_uuid)

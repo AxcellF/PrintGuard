@@ -30,7 +30,7 @@ async def get_camera_state_ep(request: Request, camera_uuid: str = Body(..., emb
     detection_times = [t for t, _ in camera_state.detection_history] if (
         camera_state.detection_history
         ) else []
-    total_detections = len(camera_state.detection_history)
+    total_detections = camera_state.total_detections
     frame_rate = calculate_frame_rate(camera_state.detection_history)
     response = {
         "nickname": camera_state.nickname,

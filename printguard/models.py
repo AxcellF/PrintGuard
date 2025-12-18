@@ -129,6 +129,7 @@ class CameraState(BaseModel):
     lock: asyncio.Lock = Field(default_factory=asyncio.Lock, exclude=True)
     current_alert_id: Optional[str] = None
     detection_history: List[tuple] = []
+    total_detections: int = 0
     live_detection_running: bool = False
     live_detection_task: Optional[str] = None
     last_result: Optional[str] = None

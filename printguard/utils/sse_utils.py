@@ -80,7 +80,7 @@ async def _sse_update_camera_state_func(camera_uuid):
     from .camera_utils import get_camera_state, calculate_frame_rate
     state = await get_camera_state(camera_uuid)
     detection_history = state.detection_history
-    total_detections = len(detection_history)
+    total_detections = state.total_detections
     frame_rate = calculate_frame_rate(detection_history)
     data = {
         "start_time": state.start_time,
