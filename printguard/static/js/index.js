@@ -307,7 +307,7 @@ function fetchAndUpdateMetricsForCamera(cameraUUID) {
                 start_time: data.start_time,
                 last_result: data.last_result,
                 last_time: data.last_time,
-                total_detections: data.detection_times ? data.detection_times.length : 0,
+                total_detections: data.total_detections,
                 frame_rate: data.frame_rate,
                 live_detection_running: data.live_detection_running,
                 brightness: data.brightness,

@@ -12,7 +12,7 @@ from .sse_utils import sse_update_camera_state
 from .detection_utils import (_passed_majority_vote, _create_alert_and_notify,
                               _send_alert)
 from .camera_utils import get_camera_state_sync
-from .shared_video_stream import get_shared_camera_frame
+from .shared_video_stream import get_shared_camera_frame, get_shared_camera_frame_no_wait
 from ..models import SavedConfig, SiteStartupMode
 from .config import (get_config, STREAM_MAX_FPS, STREAM_TUNNEL_FPS,
                      STREAM_JPEG_QUALITY, STREAM_TUNNEL_JPEG_QUALITY,
@@ -177,6 +177,19 @@ def create_optimized_frame_generator(camera_uuid: str, camera_state_getter):
     # pylint: disable=E1101
     last_frame_time = 0
     frame_count = 0
+    last_yielded_frame_bytes = None
+    
+    # Get the manager instance via the helper to access the lock-free method
+    # It must be imported here or passed in. Given camera_state_getter is passed,
+    # let's try to see if it supports the no_lock method if it's an instance method,
+    # otherwise we might need to import the manager singleton.
+    # To be safe and clean, we will assume camera_state_getter is the BOUND method
+    # `camera_state_manager.get_camera_state_sync`.
+    # But wait, the caller passes `get_camera_state_sync` which is a function in `camera_utils`.
+    # We should probably import the camera_state_manager singleton in camera_utils or here.
+    # Let's import it here to be explicit.
+    from .camera_utils import camera_state_manager
+    
     if frame_count == 0:
         stream_optimizer.log_optimization_info()
     try:
@@ -184,24 +197,53 @@ def create_optimized_frame_generator(camera_uuid: str, camera_state_getter):
             if stream_optimizer.should_limit_fps(last_frame_time):
                 time.sleep(0.001)
                 continue
-            camera_state = camera_state_getter(camera_uuid)
+            
+            # FAST PATH: Read state without creating new event loop
+            if hasattr(camera_state_manager, 'get_camera_state_sync_no_lock'):
+                camera_state = camera_state_manager.get_camera_state_sync_no_lock(camera_uuid)
+            else:
+                # Fallback (should not happen with our changes)
+                camera_state = camera_state_getter(camera_uuid)
+            
+            if not camera_state:
+                time.sleep(0.1)
+                continue
+
             contrast = camera_state.contrast
             brightness = camera_state.brightness
             focus = camera_state.focus
-            frame = get_shared_camera_frame(camera_uuid)
+            
+            # FAST PATH: Try to get frame without waiting
+            frame = get_shared_camera_frame_no_wait(camera_uuid)
+            
             if frame is None:
-                logging.warning("Failed to get frame from shared camera stream %s", camera_uuid)
-                time.sleep(0.1)
-                continue
+                # If no new frame, do we have an old one to keep the stream alive?
+                if last_yielded_frame_bytes:
+                     # Yield the LAST known frame to prevent browser timeout (simulated 1fps heartbeat or similar)
+                     # But only if we've waited "too long" or just eagerly?
+                     # Eagerly yielding identical frames burns bandwidth.
+                     # Better: Sleep briefly.
+                     time.sleep(0.01)
+                     continue
+                else:
+                    logging.warning("No frame available from shared stream %s", camera_uuid)
+                    time.sleep(0.1)
+                    continue
+            
             frame = cv2.convertScaleAbs(frame, alpha=contrast, beta=int((brightness - 1.0) * 255))
             if focus and focus != 1.0:
                 blurred = cv2.GaussianBlur(frame, (0, 0), sigmaX=focus)
                 frame = cv2.addWeighted(frame, 1.0 + focus, blurred, -focus, 0)
+            
             frame, settings = stream_optimizer.optimize_frame(frame)
             frame_bytes = stream_optimizer.encode_frame(frame)
+            
             last_frame_time = time.time()
             frame_count += 1
+            last_yielded_frame_bytes = frame_bytes
+            
             yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+            
             if frame_count % 300 == 0:
                 settings = stream_optimizer.get_stream_settings()
                 logging.debug("Camera %s: Streamed %d frames, mode: %s",

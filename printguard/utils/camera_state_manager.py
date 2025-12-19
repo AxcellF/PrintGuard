@@ -135,6 +135,17 @@ class CameraStateManager:
                 return camera_state_ref
         return None
 
+    def get_camera_state_sync_no_lock(self, camera_uuid: str) -> Optional[CameraState]:
+        """Synchronous, lock-free retrieval of camera state for high-frequency polling.
+
+        Args:
+            camera_uuid (str): The UUID of the camera.
+
+        Returns:
+            Optional[CameraState]: The state of the camera, or None if not found.
+        """
+        return self._states.get(camera_uuid)
+
     async def get_all_camera_uuids(self) -> list:
         """Retrieves a list of all camera UUIDs.
 

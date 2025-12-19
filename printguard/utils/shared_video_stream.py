@@ -112,6 +112,17 @@ class SharedVideoStream:
         with self.frame_lock:
             return self.latest_frame is not None
 
+    def get_latest_frame_if_available(self) -> Optional[np.ndarray]:
+        """Get the latest frame without waiting/locking deep logic.
+
+        Returns:
+            Optional[np.ndarray]: The latest frame if available, else None.
+        """
+        with self.frame_lock:
+            if self.latest_frame is not None:
+                return self.latest_frame.copy()
+            return None
+
     def get_frame_info(self) -> Dict:
         """Get information about the current frame."""
         with self.frame_lock:
@@ -170,11 +181,46 @@ class SharedVideoStreamManager:
                 return self.streams[camera_uuid].get_frame_info()
             return {'is_running': False, 'is_healthy': False, 'has_frame': False}
 
+    def get_frame_no_wait(self, camera_uuid: str) -> Optional[np.ndarray]:
+        """Get the latest frame for a camera without waiting if the stream exists.
+
+        Args:
+            camera_uuid (str): The UUID of the camera.
+
+        Returns:
+             Optional[np.ndarray]: The frame or None.
+        """
+        # Lockless read optimization: streams dict retrieval is atomic enough in GIL
+        # but we use lock to be safe against deletion.
+        stream = None
+        with self.lock:
+            stream = self.streams.get(camera_uuid)
+        
+        if stream:
+            return stream.get_latest_frame_if_available()
+        return None
+
 _shared_stream_manager = SharedVideoStreamManager()
 
 def get_shared_stream_manager() -> SharedVideoStreamManager:
     """Get the global shared stream manager."""
     return _shared_stream_manager
+
+def get_shared_camera_frame_no_wait(camera_uuid: str) -> Optional[np.ndarray]:
+    """Get a frame from the shared camera stream without waiting.
+
+    Args:
+        camera_uuid (str): The UUID of the camera.
+
+    Returns:
+        Optional[np.ndarray]: The frame or None.
+    """
+    try:
+        manager = get_shared_stream_manager()
+        return manager.get_frame_no_wait(camera_uuid)
+    except (ImportError, AttributeError) as e:
+        logging.error("Error getting shared camera frame (no wait) for %s: %s", camera_uuid, e)
+        return None
 
 def get_shared_camera_frame(camera_uuid: str) -> Optional[np.ndarray]:
     """Get a frame from the shared camera stream."""

@@ -28,11 +28,13 @@ async def start_live_detection(request: Request, camera_uuid: str = Body(..., em
         await update_camera_state(camera_uuid, {
             "current_alert_id": None,
             "detection_history": [],
+            "total_detections": 0,
             "last_result": None,
             "last_time": None,
             "error": None
         })
     await update_camera_state(camera_uuid, {"start_time": time.time(),
+                                       "last_time": None,
                                        "live_detection_running": True,
                                        "live_detection_task": asyncio.create_task(
                                            _live_detection_loop(request.app.state, camera_uuid)

@@ -64,7 +64,12 @@ class WebRTCClient:
         self.loop = None
         self.pc = None
         self.pk = None # peer key/id from server
+        self.pc = None
+        self.pk = None # peer key/id from server
         self._latest_frame = None
+        self._last_frame_time = 0
+        self._last_pts = None
+        self._timeout_sec = 5.0 # Max time to hold last frame if connection drops
         
         # Start background thread
         self.thread = threading.Thread(target=self._run_thread, daemon=True)
@@ -218,6 +223,13 @@ class WebRTCClient:
                     # Convert AVFrame to numpy (BGR)
                     img = frame.to_ndarray(format="bgr24")
                     
+                    # PTS-Based Deadlock Detection:
+                    # Update timestamps ONLY if the content (pts) has advanced.
+                    # If server sends duplicate frames (keep-alive) with same PTS, time won't advance.
+                    if self._last_pts is None or frame.pts != self._last_pts:
+                        self._last_frame_time = time.time()
+                        self._last_pts = frame.pts
+                    
                     if not self.queue.full():
                         self.queue.put(img)
                     else:
@@ -234,14 +246,23 @@ class WebRTCClient:
 
     def read(self):
         try:
-            frame = self.queue.get(timeout=2.0) 
+            frame = self.queue.get(timeout=0.1) 
             self._latest_frame = frame
-            return True, frame
         except queue.Empty:
-            if self._latest_frame is not None:
-                 # Behave like a stream (hold last frame if transient lag, mostly for testing)
-                 return True, self._latest_frame 
-            return False, None
+            frame = self._latest_frame
+        
+        # Check staleness regardless of whether we got a fresh frame (queue success)
+        # or are using the cached frame. Frame is considered stale if PTS hasn't advanced.
+        if frame is not None:
+             if time.time() - self._last_frame_time < self._timeout_sec:
+                 return True, frame
+             else:
+                 logging.warning("WebRTC stream timeout: PTS stalled for %.1fs, resetting.",
+                                 self._timeout_sec)
+                 self.stopped = True # Force stop to ensure cleanup
+                 return False, None
+        
+        return False, None
 
     def release(self):
         self.stopped = True
