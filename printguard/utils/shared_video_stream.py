@@ -83,6 +83,7 @@ class SharedVideoStream:
                         logging.error(
                             "Too many consecutive failures for camera %s, stopping stream",
                             self.camera_uuid)
+                        self.is_running = False # Explicitly mark as stopped so manager can restart it
                         break
                     time.sleep(0.1)
                     continue

@@ -65,6 +65,7 @@ class WebRTCClient:
         self.pc = None
         self.pk = None # peer key/id from server
         self._latest_frame = None
+        self._video_ended = False
         
         # Start background thread
         self.thread = threading.Thread(target=self._run_thread, daemon=True)
@@ -78,6 +79,7 @@ class WebRTCClient:
         except Exception as e:
             logging.error(f"WebRTC thread error: {e}")
         finally:
+            self._video_ended = True # Ensure we mark ended if thread dies
             if self.loop and self.loop.is_running():
                 tasks = asyncio.all_tasks(self.loop)
                 for t in tasks: t.cancel()
@@ -133,7 +135,7 @@ class WebRTCClient:
             return
 
         # Keep alive loop
-        while not self.stopped:
+        while not self.stopped and not self._video_ended:
             await asyncio.sleep(1)
 
     async def _connect_custom(self):
@@ -228,9 +230,12 @@ class WebRTCClient:
                             pass
                 except Exception as e:
                     # Normal during shutdown or track end
+                    logging.info(f"Frame consumption ended: {e}")
                     break
-        except Exception:
-            pass
+        except Exception as e:
+             logging.error(f"Error in consume track: {e}")
+        finally:
+            self._video_ended = True
 
     def read(self):
         try:
@@ -238,10 +243,9 @@ class WebRTCClient:
             self._latest_frame = frame
             return True, frame
         except queue.Empty:
-            if self._latest_frame is not None:
-                 # Behave like a stream (hold last frame if transient lag, mostly for testing)
-                 return True, self._latest_frame 
-            return False, None
+            # If the video ended or queue is empty for too long, treat as disconnected
+             logging.warning("WebRTC queue empty or video ended")
+             return False, None
 
     def release(self):
         self.stopped = True
