@@ -197,6 +197,11 @@ def calculate_frame_rate(detection_history):
     """
     if len(detection_history) < 2:
         return 0.0
-    times = [t for t, _ in detection_history]
+    
+    # Use sliding window of last 100 frames for current FPS
+    window_size = 100
+    recent_history = detection_history[-window_size:] if len(detection_history) > window_size else detection_history
+    
+    times = [t for t, _ in recent_history]
     duration = times[-1] - times[0]
     return (len(times) - 1) / duration if duration > 0 else 0.0

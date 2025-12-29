@@ -73,8 +73,7 @@ function updateRecentDetectionTime(last_time, doc_element) {
     try {
         if (!last_time) { throw 'exit'; }
         const date = new Date(last_time * 1000);
-        const timeString = date.toISOString().substr(11, 8);
-        doc_element.textContent = timeString;
+        doc_element.textContent = date.toLocaleTimeString();
         return;
     } catch (e) {
         doc_element.textContent = '-';
@@ -307,7 +306,7 @@ function fetchAndUpdateMetricsForCamera(cameraUUID) {
                 start_time: data.start_time,
                 last_result: data.last_result,
                 last_time: data.last_time,
-                total_detections: data.detection_times ? data.detection_times.length : 0,
+                total_detections: data.total_detections,
                 frame_rate: data.frame_rate,
                 live_detection_running: data.live_detection_running,
                 brightness: data.brightness,

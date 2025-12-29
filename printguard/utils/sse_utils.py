@@ -17,9 +17,15 @@ async def outbound_packet_fetch():
     """
     # pylint: disable=C0415
     from ..app import app
-    while True:
-        packet = await app.state.outbound_queue.get()
-        yield packet
+    queue = asyncio.Queue()
+    app.state.sse_clients.add(queue)
+    try:
+        while True:
+            packet = await queue.get()
+            yield packet
+    finally:
+        app.state.sse_clients.remove(queue)
+
 
 async def append_new_outbound_packet(packet, sse_data_type: SSEDataType):
     """Append a new Server-Sent Event packet to the outbound queue.
@@ -41,8 +47,13 @@ async def append_new_outbound_packet(packet, sse_data_type: SSEDataType):
     from ..app import app
     pkt = {"data": {"event": sse_data_type.value, "data": packet}}
     pkt_json = json.dumps(pkt)
-    await app.state.outbound_queue.put(pkt_json)
+    
+    # Broadcast to all connected clients
+    for client_queue in list(app.state.sse_clients):
+        await client_queue.put(pkt_json)
+        
     _last_dispatch_times[sse_data_type] = current_time
+
 
 async def append_new_outbound_packet_force(packet, sse_data_type: SSEDataType):
     """Force append a new Server-Sent Event packet to the outbound queue, bypassing throttling.
@@ -55,9 +66,14 @@ async def append_new_outbound_packet_force(packet, sse_data_type: SSEDataType):
     from ..app import app
     pkt = {"data": {"event": sse_data_type.value, "data": packet}}
     pkt_json = json.dumps(pkt)
-    await app.state.outbound_queue.put(pkt_json)
+    
+    # Broadcast to all connected clients
+    for client_queue in list(app.state.sse_clients):
+        await client_queue.put(pkt_json)
+
     current_time = time.time() * 1000
     _last_dispatch_times[sse_data_type] = current_time
+
 
 def reset_throttle_for_data_type(sse_data_type: SSEDataType):
     """Reset the throttle timer for a specific SSE data type.
@@ -80,7 +96,7 @@ async def _sse_update_camera_state_func(camera_uuid):
     from .camera_utils import get_camera_state, calculate_frame_rate
     state = await get_camera_state(camera_uuid)
     detection_history = state.detection_history
-    total_detections = len(detection_history)
+    total_detections = state.session_total_detections
     frame_rate = calculate_frame_rate(detection_history)
     data = {
         "start_time": state.start_time,

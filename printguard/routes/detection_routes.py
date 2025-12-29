@@ -28,6 +28,7 @@ async def start_live_detection(request: Request, camera_uuid: str = Body(..., em
         await update_camera_state(camera_uuid, {
             "current_alert_id": None,
             "detection_history": [],
+            "session_total_detections": 0,
             "last_result": None,
             "last_time": None,
             "error": None

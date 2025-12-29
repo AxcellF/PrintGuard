@@ -121,6 +121,7 @@ class CameraStateManager:
             camera_state_ref = self._states.get(camera_uuid)
             if camera_state_ref:
                 camera_state_ref.detection_history.append((time_val, pred))
+                camera_state_ref.session_total_detections += 1
                 max_history = 10000
                 if len(camera_state_ref.detection_history) > max_history:
                     camera_state_ref.detection_history = camera_state_ref.detection_history[-max_history:]
