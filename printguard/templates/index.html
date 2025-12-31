@@ -142,8 +142,12 @@
                     </div>
                     <div class="settings-item">
                         <label for="home_assistant_webhook_url">Home Assistant Webhook URL</label>
-                        <input type="text" id="home_assistant_webhook_url" name="home_assistant_webhook_url" placeholder="http://homeassistant:8123/api/webhook/..." class="settings-input" style="width: 100%; border: 1px solid var(--primary-color); background: transparent; color: var(--text-primary); padding: 5px;">
-                        <p class="settings-hint" style="font-size: 0.8em; color: var(--text-secondary); margin-top: 5px;">Optional: URL to receive a POST request when a defect is detected.</p>
+                        <input type="text" id="home_assistant_webhook_url" name="home_assistant_webhook_url"
+                            placeholder="http://homeassistant:8123/api/webhook/..." class="settings-input"
+                            style="width: 100%; border: 1px solid var(--primary-color); background: transparent; color: var(--text-primary); padding: 5px;">
+                        <p class="settings-hint"
+                            style="font-size: 0.8em; color: var(--text-secondary); margin-top: 5px;">Optional: URL to
+                            receive a POST request when a defect is detected.</p>
                     </div>
                     <div class="settings-item">
                         <button class="start-stop-btn" id="configureSetupBtn">Configure Setup</button>
@@ -257,6 +261,7 @@
                             <select id="modalPrinterConnectionType" name="printer_type" required>
                                 <option value="">Select connection type...</option>
                                 <option value="octoprint">OctoPrint</option>
+                                <option value="moonraker">Moonraker</option>
                             </select>
                         </div>
                         <div id="modalOctoprintConfig" style="display:none;">

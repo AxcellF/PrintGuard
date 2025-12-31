@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from ..models import PrinterConfigRequest, AlertAction
 from ..utils.printer_services.octoprint import OctoPrintClient
+from ..utils.printer_services.moonraker import MoonrakerClient
 from ..utils.printer_utils import (get_printer_id, remove_printer,
                                    set_printer, suspend_print_job)
 from ..utils.camera_utils import get_camera_state
@@ -26,7 +27,10 @@ async def add_printer_ep(camera_uuid: str, printer_config: PrinterConfigRequest)
         HTTPException: If printer connection test fails or configuration is invalid.
     """
     try:
-        client = OctoPrintClient(printer_config.base_url, printer_config.api_key)
+        if printer_config.printer_type == "moonraker":
+            client = MoonrakerClient(printer_config.base_url, printer_config.api_key)
+        else:
+            client = OctoPrintClient(printer_config.base_url, printer_config.api_key)
         client.get_job_info()
         printer_id = f"{camera_uuid}_{printer_config.name.replace(' ', '_')}"
         await set_printer(camera_uuid, printer_id, printer_config.model_dump())

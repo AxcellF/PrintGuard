@@ -928,7 +928,19 @@ document.getElementById('modalUnlinkPrinterBtn').addEventListener('click', () =>
 });
 
 document.getElementById('modalPrinterConnectionType').addEventListener('change', (e) => {
-    document.getElementById('modalOctoprintConfig').style.display = e.target.value === 'octoprint' ? 'block' : 'none';
+    const isOcto = e.target.value === 'octoprint';
+    const isMoon = e.target.value === 'moonraker';
+    document.getElementById('modalOctoprintConfig').style.display = (isOcto || isMoon) ? 'block' : 'none';
+
+    // Toggle API Key requirement
+    const apiKeyInput = document.getElementById('modalOctoprintApiKeyInput');
+    if (isOcto) {
+        apiKeyInput.required = true;
+        document.querySelector('label[for="modalOctoprintApiKeyInput"]').textContent = "API Key";
+    } else if (isMoon) {
+        apiKeyInput.required = false;
+        document.querySelector('label[for="modalOctoprintApiKeyInput"]').textContent = "API Key (Optional)";
+    }
 });
 
 document.getElementById('linkPrinterForm')?.addEventListener('submit', async (e) => {
@@ -955,6 +967,11 @@ document.getElementById('linkPrinterForm')?.addEventListener('submit', async (e)
         }
         if (!apiKey) {
             alert('Please enter the API key');
+            return;
+        }
+    } else if (printerType === 'moonraker') {
+        if (!baseUrl) {
+            alert('Please enter the base URL');
             return;
         }
     }

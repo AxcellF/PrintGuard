@@ -108,6 +108,7 @@ class CurrentPayload(BaseModel):
 
 class PrinterType(str, Enum):
     OCTOPRINT = "octoprint"
+    MOONRAKER = "moonraker"
 
 class PrinterConfig(BaseModel):
     name: str
