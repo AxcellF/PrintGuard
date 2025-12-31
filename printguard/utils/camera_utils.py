@@ -10,6 +10,7 @@ import cv2
 from ..models import CameraState
 from .camera_state_manager import get_camera_state_manager
 from .webrtc_client import WebRTCClient
+from .mjpeg_client import MJPEGClient
 
 
 async def add_camera(source, nickname):
@@ -108,6 +109,8 @@ def open_camera(camera_uuid) -> cv2.VideoCapture:
     if isinstance(source, str) and source.startswith("webrtc+"):
         source = source.replace("webrtc+", "", 1)
         cap = WebRTCClient(url=source)
+    elif isinstance(source, str) and source.startswith("mjpeg+"):
+        cap = MJPEGClient(url=source)
     else:
         cap = cv2.VideoCapture(source, cv2.CAP_ANY)
         

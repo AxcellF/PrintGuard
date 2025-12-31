@@ -1016,14 +1016,17 @@ addCameraModalOverlay?.addEventListener('click', function (e) {
 const addSerialCameraButton = document.getElementById('addSerialCameraButton');
 const addRtspCameraButton = document.getElementById('addRtspCameraButton');
 const addWebrtcCameraButton = document.getElementById('addWebrtcCameraButton');
+const addMjpegCameraButton = document.getElementById('addMjpegCameraButton');
 const cameraTypeSelection = document.getElementById('cameraTypeSelection');
 const addCameraForm = document.getElementById('addCameraForm');
 const serialCameraSetup = document.getElementById('serialCameraSetup');
 const rtspCameraSetup = document.getElementById('rtspCameraSetup');
 const webrtcCameraSetup = document.getElementById('webrtcCameraSetup');
+const mjpegCameraSetup = document.getElementById('mjpegCameraSetup');
 const serialDeviceSelect = document.getElementById('serialDevice');
 const rtspUrlInput = document.getElementById('rtspUrl');
 const webrtcUrlInput = document.getElementById('webrtcUrl');
+const mjpegUrlInput = document.getElementById('mjpegUrl');
 const serialLoading = document.getElementById('serialLoading');
 const noSerialDeviceMessage = document.getElementById('noSerialDeviceMessage');
 
@@ -1075,6 +1078,8 @@ function updatePreview() {
         source = rtspUrlInput.value;
     } else if (webrtcCameraSetup.style.display !== 'none' && webrtcUrlInput.value) {
         source = webrtcUrlInput.value;
+    } else if (mjpegCameraSetup.style.display !== 'none' && mjpegUrlInput.value) {
+        source = 'mjpeg+' + mjpegUrlInput.value;
     }
     if (!source) {
         showPreviewError();
@@ -1165,6 +1170,19 @@ addWebrtcCameraButton?.addEventListener('click', () => {
     webrtcUrlInput.required = true;
 });
 
+addMjpegCameraButton?.addEventListener('click', () => {
+    cameraTypeSelection.style.display = 'none';
+    addCameraForm.style.display = 'block';
+    serialCameraSetup.style.display = 'none';
+    rtspCameraSetup.style.display = 'none';
+    webrtcCameraSetup.style.display = 'none';
+    mjpegCameraSetup.style.display = 'block';
+    serialDeviceSelect.required = false;
+    rtspUrlInput.required = false;
+    webrtcUrlInput.required = false;
+    mjpegUrlInput.required = true;
+});
+
 enablePreview?.addEventListener('change', updatePreview);
 
 serialDeviceSelect?.addEventListener('change', () => {
@@ -1185,6 +1203,12 @@ webrtcUrlInput?.addEventListener('input', () => {
     }
 });
 
+mjpegUrlInput?.addEventListener('input', () => {
+    if (enablePreview.checked) {
+        schedulePreviewUpdate();
+    }
+});
+
 addCameraForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(addCameraForm);
@@ -1197,6 +1221,8 @@ addCameraForm?.addEventListener('submit', async (e) => {
 
     if (webrtcCameraSetup.style.display !== 'none' && data['source']) {
         data['source'] = 'webrtc+' + data['source'];
+    } else if (mjpegCameraSetup.style.display !== 'none' && data['source']) {
+        data['source'] = 'mjpeg+' + data['source'];
     }
 
     try {
@@ -1232,9 +1258,11 @@ addCameraModalClose?.addEventListener('click', function () {
     serialCameraSetup.style.display = 'none';
     rtspCameraSetup.style.display = 'none';
     webrtcCameraSetup.style.display = 'none';
+    mjpegCameraSetup.style.display = 'none';
     serialDeviceSelect.required = false;
     rtspUrlInput.required = false;
     webrtcUrlInput.required = false;
+    mjpegUrlInput.required = false;
     serialDeviceSelect.innerHTML = '';
     serialDeviceSelect.style.display = 'none';
     noSerialDeviceMessage.style.display = 'none';

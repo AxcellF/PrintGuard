@@ -5,6 +5,7 @@ from typing import Dict, Optional, List, Callable
 import cv2
 import numpy as np
 
+from .mjpeg_client import MJPEGClient
 from .camera_utils import get_camera_state_sync
 from .webrtc_client import WebRTCClient
 
@@ -56,6 +57,10 @@ class SharedVideoStream:
                  source = source.replace("webrtc+", "", 1)
                  logging.info("Explicit WebRTC source detected: %s", source)
                  self.cap = WebRTCClient(source)
+            elif isinstance(source, str) and source.startswith("mjpeg+"):
+                 source = source.replace("mjpeg+", "", 1)
+                 logging.info("Explicit MJPEG source detected: %s", source)
+                 self.cap = MJPEGClient(source)
             elif isinstance(source, str) and (source.startswith("http://") or source.startswith("https://")) and "webrtc" in source.lower():
                  logging.info("Detected WebRTC source via URL pattern: %s", source)
                  self.cap = WebRTCClient(source)
